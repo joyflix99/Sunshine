@@ -99,4 +99,4 @@ USER ${UNAME}
 WORKDIR ${HOME}
 
 # entrypoint
-ENTRYPOINT ["/usr/bin/sunshine"]
+ENTRYPOINT ["/bin/bash"]

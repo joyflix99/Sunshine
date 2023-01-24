@@ -1,0 +1,21 @@
+version: '3'
+services:
+  sunshine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sunshine
+    ports:
+      - "47984-47990:47984-47990/tcp"
+      - "48010:48010"
+      - "47998-48000:47998-48000/udp"
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+    # Configure for interactive session
+    stdin_open: true
+    tty: true
