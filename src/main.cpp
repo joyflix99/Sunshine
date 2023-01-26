@@ -312,16 +312,16 @@ int main(int argc, char *argv[]) {
 
   proc::refresh(config::stream.file_apps);
 
-  auto deinit_guard = platf::init();
+/*  auto deinit_guard = platf::init();
   if(!deinit_guard) {
     return 4;
-  }
+  }*/
 
   reed_solomon_init();
   auto input_deinit_guard = input::init();
-  if(video::init()) {
+/*  if(video::init()) {
     return 2;
-  }
+  }*/
   if(http::init()) {
     return 3;
   }
