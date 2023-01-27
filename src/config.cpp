@@ -285,8 +285,8 @@ stream_t stream {
 };
 
 nvhttp_t nvhttp {
-  "pc",  // origin_pin
-  "lan", // origin web manager
+  "wan",  // origin_pin
+  "wan", // origin web manager
 
   PRIVATE_KEY_FILE,
   CERTIFICATE_FILE,
@@ -918,6 +918,11 @@ int parse(int argc, char *argv[]) {
     if(line == "--help"sv) {
       print_help(*argv);
       return 1;
+    }
+    else if(line == "--web_dir"sv){
+      auto val = argv[x+1];
+      nvhttp.web_dir = val;
+      x++;
     }
     else if(*line == '-') {
       if(*(line + 1) == '-') {

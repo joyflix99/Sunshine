@@ -16,6 +16,29 @@ services:
           devices:
             - capabilities: [gpu]
 
+  sunshine-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+    container_name: sunshine-runtime
+    volumes:
+      - /home/owais/.config/sunshine:/home/owais/.config/sunshine
+      - /dev/dri:/dev/dri
+    # ports:
+    #   - "47984-47990:47984-47990/tcp"
+    #   - "48010:48010"
+    #   - "47998-48000:47998-48000/udp"
+    environment:
+      - DISPLAY=:0
+    network_mode:
+      "host"
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
     # Configure for interactive session
     stdin_open: true
     tty: true

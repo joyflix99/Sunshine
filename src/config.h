@@ -81,6 +81,8 @@ struct nvhttp_t {
   std::string external_ip;
   std::vector<std::string> resolutions;
   std::vector<int> fps;
+
+  std::string web_dir;
 };
 
 struct input_t {

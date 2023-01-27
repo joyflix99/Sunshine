@@ -1,0 +1,176 @@
+# Ubuntu release versions 18.04 and 20.04 are supported
+ARG UBUNTU_RELEASE=22.04
+ARG CUDA_VERSION=11.7.1
+FROM 1293231/cloudgaming:nvidia-vulkan-22.04
+
+ARG UBUNTU_RELEASE
+ARG CUDA_VERSION
+# Make all NVIDIA GPUs visible by default
+ARG NVIDIA_VISIBLE_DEVICES=all
+# Use noninteractive mode to skip confirmation when installing packages
+ARG DEBIAN_FRONTEND=noninteractive
+# All NVIDIA driver capabilities should preferably be used, check `NVIDIA_DRIVER_CAPABILITIES` inside the container if things do not work
+ENV NVIDIA_DRIVER_CAPABILITIES all
+# Enable AppImage execution in a container
+ENV APPIMAGE_EXTRACT_AND_RUN 1
+# System defaults that should not be changed
+ENV DISPLAY :0
+ENV PULSE_SERVER 127.0.0.1:4713
+ENV XDG_RUNTIME_DIR /tmp
+
+# Default environment variables (password is "mypasswd")
+ENV TZ UTC
+ENV SIZEW 1920
+ENV SIZEH 1080
+ENV REFRESH 60
+ENV DPI 96
+ENV CDEPTH 24
+ENV VGL_DISPLAY egl
+ENV PASSWD mypasswd
+ENV NOVNC_ENABLE false
+ENV WEBRTC_ENCODER nvh264enc
+ENV WEBRTC_ENABLE_RESIZE false
+ENV ENABLE_AUDIO true
+ENV ENABLE_BASIC_AUTH true
+
+# Set versions for components that should be manually checked before upgrading, other component versions are automatically determined by fetching the version online
+ARG VIRTUALGL_VERSION=3.0.2
+ARG NOVNC_VERSION=1.3.0
+
+# Install locales to prevent Xvfb errors
+RUN apt-get clean && \
+    apt-get update && apt-get install --no-install-recommends -y locales && \
+    rm -rf /var/lib/apt/lists/* && \
+    locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# Install Xvfb, Xfce4 desktop environment, and other utility packages
+RUN dpkg --add-architecture i386 && \
+    apt-get update && apt-get install --no-install-recommends -y \
+        software-properties-common \
+        apt-transport-https \
+        apt-utils \
+        build-essential \
+        ca-certificates \
+        supervisor \
+        curl \
+        wget \
+        gcc \
+        git \
+        make \
+        python3 \
+        mesa-utils \
+        mesa-utils-extra \
+        mesa-va-drivers \
+        mesa-vulkan-drivers \
+        libvulkan-dev \
+        libvulkan-dev:i386  \
+        xvfb \
+        libpulse0 \
+        pulseaudio \
+        xcursor-themes && \
+        rm -rf /var/lib/apt/lists/*
+
+# Install and configure Vulkan manually
+RUN if [ "${UBUNTU_RELEASE}" = "18.04" ]; then apt-get update && apt-get install --no-install-recommends -y vulkan-utils; else apt-get update && apt-get install --no-install-recommends -y vulkan-tools; fi && \
+    rm -rf /var/lib/apt/lists/* && \
+    VULKAN_API_VERSION=$(dpkg -s libvulkan1 | grep -oP 'Version: [0-9|\.]+' | grep -oP '[0-9]+(\.[0-9]+)(\.[0-9]+)') && \
+    mkdir -p /etc/vulkan/icd.d/ && \
+    echo "{\n\
+    \"file_format_version\" : \"1.0.0\",\n\
+    \"ICD\": {\n\
+        \"library_path\": \"libGLX_nvidia.so.0\",\n\
+        \"api_version\" : \"${VULKAN_API_VERSION}\"\n\
+    }\n\
+}" > /etc/vulkan/icd.d/nvidia_icd.json
+
+# Install thunar file manager
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    thunar &&\
+    rm -rf /var/lib/apt/lists/*
+
+# Install nano 
+# Install thunar file manager
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    nano &&\
+    rm -rf /var/lib/apt/lists/*
+
+# Install Lutris
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    lutris &&\
+    rm -rf /var/lib/apt/lists/*
+
+# Install Wine
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    wine &&\
+    rm -rf /var/lib/apt/lists/*
+
+# Install Wine32
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    wine32 &&\
+    rm -rf /var/lib/apt/lists/*
+
+# Install VirtualGL and make libraries available for preload
+RUN curl -fsSL -O "https://sourceforge.net/projects/virtualgl/files/virtualgl_${VIRTUALGL_VERSION}_amd64.deb" && \
+    curl -fsSL -O "https://sourceforge.net/projects/virtualgl/files/virtualgl32_${VIRTUALGL_VERSION}_amd64.deb" && \
+    apt-get update && apt-get install -y --no-install-recommends ./virtualgl_${VIRTUALGL_VERSION}_amd64.deb ./virtualgl32_${VIRTUALGL_VERSION}_amd64.deb && \
+    rm -f "virtualgl_${VIRTUALGL_VERSION}_amd64.deb" "virtualgl32_${VIRTUALGL_VERSION}_amd64.deb" && \
+    rm -rf /var/lib/apt/lists/* && \
+    chmod u+s /usr/lib/libvglfaker.so && \
+    chmod u+s /usr/lib/libdlfaker.so && \
+    chmod u+s /usr/lib32/libvglfaker.so && \
+    chmod u+s /usr/lib32/libdlfaker.so && \
+    chmod u+s /usr/lib/i386-linux-gnu/libvglfaker.so && \
+    chmod u+s /usr/lib/i386-linux-gnu/libdlfaker.so
+
+# Create user with password ${PASSWD} and assign adequate groups
+RUN apt-get update && apt-get install --no-install-recommends -y \
+        sudo && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -g 1000 owais && \
+    useradd -ms /bin/bash owais -u 1000 -g 1000 && \
+    usermod -a -G adm,audio,cdrom,dialout,dip,fax,floppy,lp,plugdev,sudo,tape,tty,video,voice owais && \
+    echo "owais ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    chown owais:owais /home/owais && \
+    echo "owais:${PASSWD}" | chpasswd && \
+    ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime && echo "$TZ" > /etc/timezone
+
+RUN apt-get update -y \
+     && apt-get install -y --no-install-recommends \
+        build-essential=12.9* \
+        cmake=3.22.1* \
+        libavdevice-dev=7:4.4.* \
+        libboost-filesystem-dev=1.74.0* \
+        libboost-log-dev=1.74.0* \
+        libboost-thread-dev=1.74.0* \
+        libboost-program-options-dev=1.74.0* \
+        libcap-dev=1:2.44* \
+        libcurl4-openssl-dev=7.81.0* \
+        libdrm-dev=2.4.110* \
+        libevdev-dev=1.12.1* \
+        libnuma-dev=2.0.14* \
+        libopus-dev=1.3.1* \
+        libpulse-dev=1:15.99.1* \
+        libssl-dev=3.0.2* \
+        libva-dev=2.14.0* \
+        libvdpau-dev=1.4* \
+        libwayland-dev=1.20.0* \
+        libx11-dev=2:1.7.5* \
+        libxcb-shm0-dev=1.14* \
+        libxcb-xfixes0-dev=1.14* \
+        libxcb1-dev=1.14* \
+        libxfixes-dev=1:6.0.0* \
+        libxrandr-dev=2:1.5.2* \
+        libxtst-dev=2:1.2.3* \
+        nodejs=12.22.9* \
+        npm=8.5.1* \
+        nvidia-cuda-dev=11.5.1* \
+        nvidia-cuda-toolkit=11.5.1* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY sunshine-0.17.0 /sunshine-0.17.0
+
+ENTRYPOINT [ "/bin/bash" ]
