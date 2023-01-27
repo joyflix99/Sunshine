@@ -285,8 +285,8 @@ stream_t stream {
 };
 
 nvhttp_t nvhttp {
-  "pc",  // origin_pin
-  "lan", // origin web manager
+  "wan",  // origin_pin
+  "wan", // origin web manager
 
   PRIVATE_KEY_FILE,
   CERTIFICATE_FILE,
@@ -909,6 +909,35 @@ void apply_config(std::unordered_map<std::string, std::string> &&vars) {
   }
 }
 
+void Init(){
+  nvhttp = {
+    "pc",  // origin_pin
+    "wan", // origin web manager
+
+    PRIVATE_KEY_FILE,
+    CERTIFICATE_FILE,
+
+    boost::asio::ip::host_name(), // sunshine_name,
+    "sunshine_state.json"s,       // file_state
+    {},                           // external_ip
+    {
+      "352x240"s,
+      "480x360"s,
+      "858x480"s,
+      "1280x720"s,
+      "1920x1080"s,
+      "2560x1080"s,
+      "3440x1440"s
+      "1920x1200"s,
+      "3860x2160"s,
+      "3840x1600"s,
+    }, // supported resolutions
+
+    { 10, 30, 60, 90, 120 }, // supported fps
+    ""
+  };
+}
+
 int parse(int argc, char *argv[]) {
   std::unordered_map<std::string, std::string> cmd_vars;
 
@@ -918,6 +947,11 @@ int parse(int argc, char *argv[]) {
     if(line == "--help"sv) {
       print_help(*argv);
       return 1;
+    }
+    else if(line == "--web_dir"sv){
+      auto val = argv[x+1];
+      nvhttp.web_dir = val;
+      x++;
     }
     else if(*line == '-') {
       if(*(line + 1) == '-') {

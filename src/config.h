@@ -81,6 +81,8 @@ struct nvhttp_t {
   std::string external_ip;
   std::vector<std::string> resolutions;
   std::vector<int> fps;
+
+  std::string web_dir;
 };
 
 struct input_t {
@@ -131,6 +133,8 @@ extern stream_t stream;
 extern nvhttp_t nvhttp;
 extern input_t input;
 extern sunshine_t sunshine;
+
+void Init();
 
 int parse(int argc, char *argv[]);
 std::unordered_map<std::string, std::string> parse_config(const std::string_view &file_content);

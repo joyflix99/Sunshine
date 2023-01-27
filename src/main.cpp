@@ -205,6 +205,8 @@ int main(int argc, char *argv[]) {
 
   mail::man = std::make_shared<safe::mail_raw_t>();
 
+  config::Init();
+
   if(config::parse(argc, argv)) {
     return 0;
   }

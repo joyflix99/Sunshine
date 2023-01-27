@@ -149,8 +149,8 @@ void getIndexPage(resp_https_t response, req_https_t request) {
 
   print_req(request);
 
-  std::string header  = read_file(WEB_DIR "header.html");
-  std::string content = read_file(WEB_DIR "index.html");
+  std::string header  = read_file((config::nvhttp.web_dir + std::string("header.html")).c_str());
+  std::string content = read_file((config::nvhttp.web_dir + std::string("index.html")).c_str());
   response->write(header + content);
 }
 
@@ -159,8 +159,8 @@ void getPinPage(resp_https_t response, req_https_t request) {
 
   print_req(request);
 
-  std::string header  = read_file(WEB_DIR "header.html");
-  std::string content = read_file(WEB_DIR "pin.html");
+  std::string header  = read_file((config::nvhttp.web_dir + std::string( "header.html")).c_str());
+  std::string content = read_file((config::nvhttp.web_dir + std::string( "pin.html")).c_str());
   response->write(header + content);
 }
 
@@ -251,17 +251,17 @@ void getNodeModules(resp_https_t response, req_https_t request) {
 
   SimpleWeb::CaseInsensitiveMultimap headers;
   if(boost::algorithm::iends_with(request->path, ".ttf") == 1) {
-    std::ifstream in((WEB_DIR + request->path).c_str(), std::ios::binary);
+    std::ifstream in(((config::nvhttp.web_dir + request->path)).c_str(), std::ios::binary);
     headers.emplace("Content-Type", "font/ttf");
     response->write(SimpleWeb::StatusCode::success_ok, in, headers);
   }
   else if(boost::algorithm::iends_with(request->path, ".woff2") == 1) {
-    std::ifstream in((WEB_DIR + request->path).c_str(), std::ios::binary);
+    std::ifstream in(((config::nvhttp.web_dir + request->path).c_str()), std::ios::binary);
     headers.emplace("Content-Type", "font/woff2");
     response->write(SimpleWeb::StatusCode::success_ok, in, headers);
   }
   else {
-    std::string content = read_file((WEB_DIR + request->path).c_str());
+    std::string content = read_file(((config::nvhttp.web_dir + request->path)).c_str());
     response->write(content);
   }
 }

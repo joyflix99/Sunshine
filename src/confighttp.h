@@ -8,7 +8,9 @@
 
 #include "thread_safe.h"
 
+#ifndef WEB_DIR
 #define WEB_DIR SUNSHINE_ASSETS_DIR "/web/"
+#endif
 
 
 namespace confighttp {
